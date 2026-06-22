@@ -34,7 +34,8 @@ def persist_extraction(
     # Overall confidence = min of available signals. Frontend uses <0.85 to
     # surface a "get a human" prompt.
     signals = [
-        s for s in (extracted.language_confidence, extracted.category_confidence)
+        s
+        for s in (extracted.language_confidence, extracted.category_confidence)
         if s and s > 0
     ]
     letter.confidence = min(signals) if signals else None
@@ -84,6 +85,7 @@ def persist_extraction(
     # so totals across letters don't double-count.
     if letter_amount is not None and saved:
         from app.models import Severity as _Sev
+
         sev_rank = {_Sev.CRITICAL: 4, _Sev.HIGH: 3, _Sev.MEDIUM: 2, _Sev.LOW: 1}
         amount_attached_to = max(saved, key=lambda x: sev_rank.get(x.severity, 0))
         amount_attached_to.amount_due_eur = letter_amount

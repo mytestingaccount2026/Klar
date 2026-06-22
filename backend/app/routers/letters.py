@@ -17,7 +17,12 @@ from app.models import (
     User,
     utcnow,
 )
-from app.schemas import ErrorResponse, LetterListItem, LetterResponse, LetterUploadResponse
+from app.schemas import (
+    ErrorResponse,
+    LetterListItem,
+    LetterResponse,
+    LetterUploadResponse,
+)
 from app.services.extraction import extract_from_letter_file, normalize_lang
 from app.services.persistence import persist_extraction
 from app.services.storage import detect_magic_mime, save_letter_file
@@ -136,7 +141,8 @@ async def upload_letter(
         raise KlarHTTPException(415, ErrorCode.LETTER_CORRUPT_FILE)
     # Allow image/jpeg ↔ image/jpg variants; otherwise demand strict match.
     if actual_mime != file.content_type and not (
-        actual_mime.startswith("image/") and file.content_type.startswith("image/")
+        actual_mime.startswith("image/")
+        and file.content_type.startswith("image/")
         and actual_mime.split("/")[-1] == file.content_type.split("/")[-1]
     ):
         raise KlarHTTPException(
@@ -248,7 +254,10 @@ async def extract_letter(
     ),
     responses={
         401: {"model": ErrorResponse, "description": "Not authenticated."},
-        422: {"model": ErrorResponse, "description": "Unknown status or category value."},
+        422: {
+            "model": ErrorResponse,
+            "description": "Unknown status or category value.",
+        },
     },
 )
 def list_letters(
@@ -268,8 +277,15 @@ def list_letters(
                 422,
                 ErrorCode.VALIDATION_ERROR,
                 message=f"Unknown status: {status!r}.",
-                details={"errors": [{"field": "status", "message": "must be one of "
-                                     + ", ".join(s.value for s in LetterStatus)}]},
+                details={
+                    "errors": [
+                        {
+                            "field": "status",
+                            "message": "must be one of "
+                            + ", ".join(s.value for s in LetterStatus),
+                        }
+                    ]
+                },
             )
     parsed_category: DocumentCategory | None = None
     if category:
@@ -280,8 +296,15 @@ def list_letters(
                 422,
                 ErrorCode.VALIDATION_ERROR,
                 message=f"Unknown category: {category!r}.",
-                details={"errors": [{"field": "category", "message": "must be one of "
-                                     + ", ".join(c.value for c in DocumentCategory)}]},
+                details={
+                    "errors": [
+                        {
+                            "field": "category",
+                            "message": "must be one of "
+                            + ", ".join(c.value for c in DocumentCategory),
+                        }
+                    ]
+                },
             )
 
     stmt = select(Letter).where(Letter.user_id == user.id)

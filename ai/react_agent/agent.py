@@ -43,9 +43,15 @@ _agent = create_agent(
 async def run_react_agent(ocr_text: str) -> AsyncGenerator[AgentEvent, None]:
     """Run the ReAct agent with structured output via LangGraph response_format."""
     try:
-        result = await _agent.ainvoke({
-            "messages": [HumanMessage(content=f"Analyze this German official letter:\n\n{ocr_text}")],
-        })
+        result = await _agent.ainvoke(
+            {
+                "messages": [
+                    HumanMessage(
+                        content=f"Analyze this German official letter:\n\n{ocr_text}"
+                    )
+                ],
+            }
+        )
 
         analysis: AgentAnalysis = result["structured_response"]
 
@@ -57,10 +63,22 @@ async def run_react_agent(ocr_text: str) -> AsyncGenerator[AgentEvent, None]:
             except ValueError:
                 pass
 
-        yield AgentEvent("classification", {"type": analysis.classification.type, "agency": analysis.classification.agency})
-        yield AgentEvent("risk_score", {"score": analysis.risk_score.score, "label": analysis.risk_score.label})
+        yield AgentEvent(
+            "classification",
+            {
+                "type": analysis.classification.type,
+                "agency": analysis.classification.agency,
+            },
+        )
+        yield AgentEvent(
+            "risk_score",
+            {"score": analysis.risk_score.score, "label": analysis.risk_score.label},
+        )
         if analysis.deadline.date:
-            yield AgentEvent("deadline", {"date": analysis.deadline.date, "days_remaining": days_remaining})
+            yield AgentEvent(
+                "deadline",
+                {"date": analysis.deadline.date, "days_remaining": days_remaining},
+            )
         yield AgentEvent("consequence", {"text": analysis.consequence.text})
 
     except Exception as e:
@@ -70,9 +88,19 @@ async def run_react_agent(ocr_text: str) -> AsyncGenerator[AgentEvent, None]:
 def get_last_agent_result(events: list[AgentEvent], ocr_text: str) -> AgentResult:
     """Reconstruct an AgentResult from collected events."""
     data = {e.type: e.data for e in events}
-    c, d, r, q = data.get("classification", {}), data.get("deadline", {}), data.get("risk_score", {}), data.get("consequence", {})
+    c, d, r, q = (
+        data.get("classification", {}),
+        data.get("deadline", {}),
+        data.get("risk_score", {}),
+        data.get("consequence", {}),
+    )
     return AgentResult(
-        ocr_text=ocr_text, letter_type=c.get("type", "Unknown"), agency=c.get("agency", "Unknown"),
-        deadline_date=d.get("date"), days_remaining=d.get("days_remaining"),
-        consequence=q.get("text", ""), risk_score=r.get("score", 3), risk_label=r.get("label", "Medium"),
+        ocr_text=ocr_text,
+        letter_type=c.get("type", "Unknown"),
+        agency=c.get("agency", "Unknown"),
+        deadline_date=d.get("date"),
+        days_remaining=d.get("days_remaining"),
+        consequence=q.get("text", ""),
+        risk_score=r.get("score", 3),
+        risk_label=r.get("label", "Medium"),
     )

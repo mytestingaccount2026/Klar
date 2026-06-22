@@ -95,7 +95,7 @@ def compute_risk(item: ActionItem, institution: str) -> dict:
             f"missing_info_penalty={mp:.2f} (×0.10)",
         ]
     )
-    return {
+    result = {
         "score": score,
         "deadline_proximity_pts": dp,
         "institution_weight": iw,
@@ -103,3 +103,4 @@ def compute_risk(item: ActionItem, institution: str) -> dict:
         "missing_info_penalty": mp,
         "explanation": explanation,
     }
+    return result

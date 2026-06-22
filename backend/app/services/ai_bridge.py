@@ -50,102 +50,89 @@ logger = logging.getLogger("klar.ai_bridge")
 
 _CATEGORY_PATTERNS: list[tuple[str, DocumentCategory]] = [
     # Most specific first
-    ("residence permit",         DocumentCategory.IMMIGRATION),
-    ("aufenthaltstitel",         DocumentCategory.IMMIGRATION),
-    ("ausländerbehörde",         DocumentCategory.IMMIGRATION),
-    ("visa",                     DocumentCategory.IMMIGRATION),
-    ("aufenthalts",              DocumentCategory.IMMIGRATION),
-    ("immigration",              DocumentCategory.IMMIGRATION),
-
-    ("health insurance",         DocumentCategory.HEALTH_INSURANCE),
-    ("krankenkasse",             DocumentCategory.HEALTH_INSURANCE),
-    ("krankenversicherung",      DocumentCategory.HEALTH_INSURANCE),
-    ("aok",                      DocumentCategory.HEALTH_INSURANCE),
-    ("techniker krankenkasse",   DocumentCategory.HEALTH_INSURANCE),
-    ("barmer",                   DocumentCategory.HEALTH_INSURANCE),
-    ("dak-gesundheit",           DocumentCategory.HEALTH_INSURANCE),
-
-    ("car insurance",            DocumentCategory.OTHER_INSURANCE),
-    ("haftpflicht",              DocumentCategory.OTHER_INSURANCE),
-    ("hausrat",                  DocumentCategory.OTHER_INSURANCE),
-    ("kfz-versicherung",         DocumentCategory.OTHER_INSURANCE),
-    ("liability insurance",      DocumentCategory.OTHER_INSURANCE),
-
-    ("tax",                      DocumentCategory.TAX),
-    ("finanzamt",                DocumentCategory.TAX),
-    ("steuer",                   DocumentCategory.TAX),
-
-    ("university",               DocumentCategory.EDUCATION),
-    ("universität",              DocumentCategory.EDUCATION),
-    ("hochschule",               DocumentCategory.EDUCATION),
-    ("immatrikulation",          DocumentCategory.EDUCATION),
-    ("studentenwerk",            DocumentCategory.EDUCATION),
-    ("bafög",                    DocumentCategory.EDUCATION),
-    ("rückmeldung",              DocumentCategory.EDUCATION),
-    ("enrollment",               DocumentCategory.EDUCATION),
-
-    ("rent",                     DocumentCategory.HOUSING),
-    ("vermieter",                DocumentCategory.HOUSING),
-    ("hausverwaltung",           DocumentCategory.HOUSING),
-    ("mieterhöhung",             DocumentCategory.HOUSING),
-    ("nebenkosten",              DocumentCategory.HOUSING),
-    ("landlord",                 DocumentCategory.HOUSING),
-
-    ("electricity",              DocumentCategory.UTILITIES),
-    ("gas bill",                 DocumentCategory.UTILITIES),
-    ("internet",                 DocumentCategory.UTILITIES),
-    ("telekom",                  DocumentCategory.UTILITIES),
-    ("vodafone",                 DocumentCategory.UTILITIES),
-    ("stadtwerke",               DocumentCategory.UTILITIES),
-    ("vattenfall",               DocumentCategory.UTILITIES),
-    ("strom",                    DocumentCategory.UTILITIES),
-
-    ("employer",                 DocumentCategory.EMPLOYMENT),
-    ("arbeitgeber",              DocumentCategory.EMPLOYMENT),
-    ("lohn",                     DocumentCategory.EMPLOYMENT),
-    ("gehalt",                   DocumentCategory.EMPLOYMENT),
-    ("payroll",                  DocumentCategory.EMPLOYMENT),
-    ("arbeitsvertrag",           DocumentCategory.EMPLOYMENT),
-
-    ("unemployment",             DocumentCategory.GOVERNMENT_BENEFITS),
-    ("kindergeld",               DocumentCategory.GOVERNMENT_BENEFITS),
-    ("elterngeld",               DocumentCategory.GOVERNMENT_BENEFITS),
-    ("wohngeld",                 DocumentCategory.GOVERNMENT_BENEFITS),
-    ("arbeitslosengeld",         DocumentCategory.GOVERNMENT_BENEFITS),
-    ("bürgergeld",               DocumentCategory.GOVERNMENT_BENEFITS),
-    ("jobcenter",                DocumentCategory.GOVERNMENT_BENEFITS),
-    ("familienkasse",            DocumentCategory.GOVERNMENT_BENEFITS),
-
-    ("pension",                  DocumentCategory.PENSION),
-    ("rentenversicherung",       DocumentCategory.PENSION),
-    ("rente",                    DocumentCategory.PENSION),
-
-    ("rundfunk",                 DocumentCategory.BROADCAST_FEE),
-    ("gez",                      DocumentCategory.BROADCAST_FEE),
-    ("beitragsservice",          DocumentCategory.BROADCAST_FEE),
-    ("broadcasting fee",         DocumentCategory.BROADCAST_FEE),
-
-    ("bürgeramt",                DocumentCategory.CIVIC),
-    ("einwohnermelde",           DocumentCategory.CIVIC),
-    ("standesamt",               DocumentCategory.CIVIC),
-    ("personalausweis",          DocumentCategory.CIVIC),
-    ("reisepass",                DocumentCategory.CIVIC),
-    ("meldebescheinigung",       DocumentCategory.CIVIC),
-
-    ("court",                    DocumentCategory.LEGAL_DEBT),
-    ("gericht",                  DocumentCategory.LEGAL_DEBT),
-    ("mahnbescheid",             DocumentCategory.LEGAL_DEBT),
-    ("vollstreckung",            DocumentCategory.LEGAL_DEBT),
-    ("inkasso",                  DocumentCategory.LEGAL_DEBT),
-    ("bußgeld",                  DocumentCategory.LEGAL_DEBT),
-    ("anwalt",                   DocumentCategory.LEGAL_DEBT),
-    ("debt collection",          DocumentCategory.LEGAL_DEBT),
-    ("fine notice",              DocumentCategory.LEGAL_DEBT),
-
-    ("bank",                     DocumentCategory.BANKING),
-    ("sparkasse",                DocumentCategory.BANKING),
-    ("schufa",                   DocumentCategory.BANKING),
-    ("kreditkarte",              DocumentCategory.BANKING),
+    ("residence permit", DocumentCategory.IMMIGRATION),
+    ("aufenthaltstitel", DocumentCategory.IMMIGRATION),
+    ("ausländerbehörde", DocumentCategory.IMMIGRATION),
+    ("visa", DocumentCategory.IMMIGRATION),
+    ("aufenthalts", DocumentCategory.IMMIGRATION),
+    ("immigration", DocumentCategory.IMMIGRATION),
+    ("health insurance", DocumentCategory.HEALTH_INSURANCE),
+    ("krankenkasse", DocumentCategory.HEALTH_INSURANCE),
+    ("krankenversicherung", DocumentCategory.HEALTH_INSURANCE),
+    ("aok", DocumentCategory.HEALTH_INSURANCE),
+    ("techniker krankenkasse", DocumentCategory.HEALTH_INSURANCE),
+    ("barmer", DocumentCategory.HEALTH_INSURANCE),
+    ("dak-gesundheit", DocumentCategory.HEALTH_INSURANCE),
+    ("car insurance", DocumentCategory.OTHER_INSURANCE),
+    ("haftpflicht", DocumentCategory.OTHER_INSURANCE),
+    ("hausrat", DocumentCategory.OTHER_INSURANCE),
+    ("kfz-versicherung", DocumentCategory.OTHER_INSURANCE),
+    ("liability insurance", DocumentCategory.OTHER_INSURANCE),
+    ("tax", DocumentCategory.TAX),
+    ("finanzamt", DocumentCategory.TAX),
+    ("steuer", DocumentCategory.TAX),
+    ("university", DocumentCategory.EDUCATION),
+    ("universität", DocumentCategory.EDUCATION),
+    ("hochschule", DocumentCategory.EDUCATION),
+    ("immatrikulation", DocumentCategory.EDUCATION),
+    ("studentenwerk", DocumentCategory.EDUCATION),
+    ("bafög", DocumentCategory.EDUCATION),
+    ("rückmeldung", DocumentCategory.EDUCATION),
+    ("enrollment", DocumentCategory.EDUCATION),
+    ("rent", DocumentCategory.HOUSING),
+    ("vermieter", DocumentCategory.HOUSING),
+    ("hausverwaltung", DocumentCategory.HOUSING),
+    ("mieterhöhung", DocumentCategory.HOUSING),
+    ("nebenkosten", DocumentCategory.HOUSING),
+    ("landlord", DocumentCategory.HOUSING),
+    ("electricity", DocumentCategory.UTILITIES),
+    ("gas bill", DocumentCategory.UTILITIES),
+    ("internet", DocumentCategory.UTILITIES),
+    ("telekom", DocumentCategory.UTILITIES),
+    ("vodafone", DocumentCategory.UTILITIES),
+    ("stadtwerke", DocumentCategory.UTILITIES),
+    ("vattenfall", DocumentCategory.UTILITIES),
+    ("strom", DocumentCategory.UTILITIES),
+    ("employer", DocumentCategory.EMPLOYMENT),
+    ("arbeitgeber", DocumentCategory.EMPLOYMENT),
+    ("lohn", DocumentCategory.EMPLOYMENT),
+    ("gehalt", DocumentCategory.EMPLOYMENT),
+    ("payroll", DocumentCategory.EMPLOYMENT),
+    ("arbeitsvertrag", DocumentCategory.EMPLOYMENT),
+    ("unemployment", DocumentCategory.GOVERNMENT_BENEFITS),
+    ("kindergeld", DocumentCategory.GOVERNMENT_BENEFITS),
+    ("elterngeld", DocumentCategory.GOVERNMENT_BENEFITS),
+    ("wohngeld", DocumentCategory.GOVERNMENT_BENEFITS),
+    ("arbeitslosengeld", DocumentCategory.GOVERNMENT_BENEFITS),
+    ("bürgergeld", DocumentCategory.GOVERNMENT_BENEFITS),
+    ("jobcenter", DocumentCategory.GOVERNMENT_BENEFITS),
+    ("familienkasse", DocumentCategory.GOVERNMENT_BENEFITS),
+    ("pension", DocumentCategory.PENSION),
+    ("rentenversicherung", DocumentCategory.PENSION),
+    ("rente", DocumentCategory.PENSION),
+    ("rundfunk", DocumentCategory.BROADCAST_FEE),
+    ("gez", DocumentCategory.BROADCAST_FEE),
+    ("beitragsservice", DocumentCategory.BROADCAST_FEE),
+    ("broadcasting fee", DocumentCategory.BROADCAST_FEE),
+    ("bürgeramt", DocumentCategory.CIVIC),
+    ("einwohnermelde", DocumentCategory.CIVIC),
+    ("standesamt", DocumentCategory.CIVIC),
+    ("personalausweis", DocumentCategory.CIVIC),
+    ("reisepass", DocumentCategory.CIVIC),
+    ("meldebescheinigung", DocumentCategory.CIVIC),
+    ("court", DocumentCategory.LEGAL_DEBT),
+    ("gericht", DocumentCategory.LEGAL_DEBT),
+    ("mahnbescheid", DocumentCategory.LEGAL_DEBT),
+    ("vollstreckung", DocumentCategory.LEGAL_DEBT),
+    ("inkasso", DocumentCategory.LEGAL_DEBT),
+    ("bußgeld", DocumentCategory.LEGAL_DEBT),
+    ("anwalt", DocumentCategory.LEGAL_DEBT),
+    ("debt collection", DocumentCategory.LEGAL_DEBT),
+    ("fine notice", DocumentCategory.LEGAL_DEBT),
+    ("bank", DocumentCategory.BANKING),
+    ("sparkasse", DocumentCategory.BANKING),
+    ("schufa", DocumentCategory.BANKING),
+    ("kreditkarte", DocumentCategory.BANKING),
 ]
 
 
@@ -160,7 +147,9 @@ def map_classification_to_category(free_text_type: str | None) -> DocumentCatego
     for pattern, cat in _CATEGORY_PATTERNS:
         if pattern in needle:
             return cat
-    logger.debug("map_classification_to_category: no match for %r → OTHER", free_text_type)
+    logger.debug(
+        "map_classification_to_category: no match for %r → OTHER", free_text_type
+    )
     return DocumentCategory.OTHER
 
 
@@ -169,10 +158,10 @@ def map_classification_to_category(free_text_type: str | None) -> DocumentCatego
 # ============================================================
 
 _LABEL_TO_SEVERITY: dict[str, Severity] = {
-    "critical":      Severity.CRITICAL,
-    "high":          Severity.HIGH,
-    "medium":        Severity.MEDIUM,
-    "low":           Severity.LOW,
+    "critical": Severity.CRITICAL,
+    "high": Severity.HIGH,
+    "medium": Severity.MEDIUM,
+    "low": Severity.LOW,
     "informational": Severity.LOW,
 }
 
@@ -194,10 +183,10 @@ def map_their_severity_label(label: str | None) -> Severity:
 # ============================================================
 
 _SOURCE_MAPPING: dict[str, DeadlineSource] = {
-    "letter":     DeadlineSource.EXPLICIT,
+    "letter": DeadlineSource.EXPLICIT,
     "calculated": DeadlineSource.INFERRED,
-    "searched":   DeadlineSource.INFERRED,   # Tavily web search
-    "none":       DeadlineSource.UNKNOWN,
+    "searched": DeadlineSource.INFERRED,  # Tavily web search
+    "none": DeadlineSource.UNKNOWN,
 }
 
 
@@ -218,6 +207,7 @@ def deadline_was_web_searched(source: str | None) -> bool:
 # Our risk_score (0-100) → their RiskScore.label (for generator input)
 # ============================================================
 
+
 def risk_label_from_score(score: int | None) -> str:
     """Map our 0-100 score → their label string (used when synthesizing an
     `AgentResult` to feed their `generate_response`)."""
@@ -236,6 +226,7 @@ def risk_label_from_score(score: int | None) -> str:
 # ============================================================
 # Letter + (optional) ActionItem → AgentResult (their dataclass)
 # ============================================================
+
 
 def synthesize_agent_result(
     letter: Letter,
@@ -274,6 +265,7 @@ def synthesize_agent_result(
 # Their LegalChunk → our RagHit (for /rag/search response)
 # ============================================================
 
+
 def legal_chunk_to_rag_hit(chunk: "LegalChunk") -> RagHit:
     """Map their `LegalChunk` from `ai.rag.retrieval` → our `RagHit` wire shape.
 
@@ -285,9 +277,9 @@ def legal_chunk_to_rag_hit(chunk: "LegalChunk") -> RagHit:
         text=chunk.text,
         score=1.0,
         metadata={
-            "section":  chunk.section,
-            "law":      chunk.law,
-            "title":    chunk.title,
+            "section": chunk.section,
+            "law": chunk.law,
+            "title": chunk.title,
             "citation": chunk.citation,
         },
     )
@@ -297,6 +289,7 @@ def legal_chunk_to_rag_hit(chunk: "LegalChunk") -> RagHit:
 # Their Citation → JSON dict (stored on Letter.citations column)
 # ============================================================
 
+
 def citation_to_dict(c: "Citation") -> dict[str, Any]:
     """Persist-shape for the `Letter.citations` JSON column.
 
@@ -305,8 +298,8 @@ def citation_to_dict(c: "Citation") -> dict[str, Any]:
     """
     return {
         "section": c.section,
-        "text":    c.text,
-        "score":   1.0,  # their structured citation doesn't carry a score
+        "text": c.text,
+        "score": 1.0,  # their structured citation doesn't carry a score
     }
 
 
@@ -317,6 +310,7 @@ def citations_to_dicts(cits: list["Citation"]) -> list[dict[str, Any]]:
 # ============================================================
 # Their GenerationOutput → (explanation, response_draft, checklist[], citations[dict])
 # ============================================================
+
 
 def unpack_generation_output(
     out: "GenerationOutput",
@@ -335,6 +329,7 @@ def unpack_generation_output(
 # ============================================================
 # Their AgentAnalysis → (category, document_type, severity, deadline_date, ...)
 # ============================================================
+
 
 async def generate_grounded_response(
     ocr_text: str,
@@ -369,8 +364,7 @@ async def generate_grounded_response(
     # Build the legal-context section from retrieved chunks
     if legal_chunks:
         legal_lines = [
-            f"### {c.citation} — {c.title}\n{c.text}\n"
-            for c in legal_chunks
+            f"### {c.citation} — {c.title}\n{c.text}\n" for c in legal_chunks
         ]
         legal_context = "\n".join(legal_lines)
     else:
@@ -403,13 +397,18 @@ async def generate_grounded_response(
         ),
         temperature=0,
         max_tokens=4096,
-        extra_body={"enable_thinking": False, "response_format": {"type": "json_object"}},
+        extra_body={
+            "enable_thinking": False,
+            "response_format": {"type": "json_object"},
+        },
     )
     response = await raw_model.ainvoke([HumanMessage(content=prompt)])
     raw_text = response.content if hasattr(response, "content") else str(response)
     if isinstance(raw_text, list):
         # Some langchain versions return content as a list of parts
-        raw_text = "".join(p.get("text", "") if isinstance(p, dict) else str(p) for p in raw_text)
+        raw_text = "".join(
+            p.get("text", "") if isinstance(p, dict) else str(p) for p in raw_text
+        )
 
     payload = json.loads(raw_text)
 
@@ -421,10 +420,12 @@ async def generate_grounded_response(
             # Bare "§ 81 AufenthG" — wrap as Citation with empty explanation
             cleaned_citations.append(Citation(section=c, text=""))
         elif isinstance(c, dict):
-            cleaned_citations.append(Citation(
-                section=str(c.get("section") or c.get("§") or "§"),
-                text=str(c.get("text") or c.get("explanation") or ""),
-            ))
+            cleaned_citations.append(
+                Citation(
+                    section=str(c.get("section") or c.get("§") or "§"),
+                    text=str(c.get("text") or c.get("explanation") or ""),
+                )
+            )
         else:
             logger.debug("Skipping unparseable citation: %r", c)
 
@@ -454,17 +455,19 @@ def unpack_agent_analysis(
         try:
             parsed_deadline = _date.fromisoformat(deadline_iso)
         except ValueError:
-            logger.debug("Their agent returned non-ISO deadline %r — dropping", deadline_iso)
+            logger.debug(
+                "Their agent returned non-ISO deadline %r — dropping", deadline_iso
+            )
 
     return {
-        "category":            map_classification_to_category(analysis.classification.type),
-        "document_type":       analysis.classification.type or "",
-        "institution":         analysis.classification.agency or "",
-        "deadline":            parsed_deadline,
-        "deadline_source":     map_their_deadline_source(analysis.deadline.source),
+        "category": map_classification_to_category(analysis.classification.type),
+        "document_type": analysis.classification.type or "",
+        "institution": analysis.classification.agency or "",
+        "deadline": parsed_deadline,
+        "deadline_source": map_their_deadline_source(analysis.deadline.source),
         "deadline_was_searched": deadline_was_web_searched(analysis.deadline.source),
-        "consequence":         analysis.consequence.text or "",
-        "severity":            map_their_severity_label(analysis.risk_score.label),
-        "risk_label":          analysis.risk_score.label or "Medium",
-        "risk_reason":         analysis.risk_score.reason or "",
+        "consequence": analysis.consequence.text or "",
+        "severity": map_their_severity_label(analysis.risk_score.label),
+        "risk_label": analysis.risk_score.label or "Medium",
+        "risk_reason": analysis.risk_score.reason or "",
     }

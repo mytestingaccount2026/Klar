@@ -21,6 +21,7 @@ def init_db() -> None:
         path = settings.database_url.replace("sqlite:///", "", 1)
         Path(path).parent.mkdir(parents=True, exist_ok=True)
     from app import models  # noqa: F401  — populate SQLModel metadata
+
     SQLModel.metadata.create_all(engine)
 
 

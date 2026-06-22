@@ -290,7 +290,9 @@ async def extract_from_letter_file(
                 json_parsed = json.loads(stripped)
             except json.JSONDecodeError:
                 # Sometimes the model wraps the JSON in code fences
-                fence_match = re.search(r"```(?:json)?\s*(.*?)\s*```", stripped, re.DOTALL)
+                fence_match = re.search(
+                    r"```(?:json)?\s*(.*?)\s*```", stripped, re.DOTALL
+                )
                 if fence_match:
                     try:
                         json_parsed = json.loads(fence_match.group(1).strip())
@@ -382,8 +384,12 @@ async def generate_reply_text(
 
     Used by POST /letters/{id}/reply (frontend contract §4.7).
     """
-    actions_text = "\n".join(f"- {t}" for t in action_titles) or "- (keine spezifische Aktion)"
-    prompt = _response_prompt_from_letter(institution, document_type, actions_text, applicant)
+    actions_text = (
+        "\n".join(f"- {t}" for t in action_titles) or "- (keine spezifische Aktion)"
+    )
+    prompt = _response_prompt_from_letter(
+        institution, document_type, actions_text, applicant
+    )
 
     client = _get_client()
     response = await client.chat.completions.create(
@@ -438,7 +444,9 @@ async def _stream_text(prompt: str) -> AsyncIterator[str]:
             yield delta.content
 
 
-async def stream_explanation(extracted: ExtractedLetter, lang: str) -> AsyncIterator[str]:
+async def stream_explanation(
+    extracted: ExtractedLetter, lang: str
+) -> AsyncIterator[str]:
     async for piece in _stream_text(_explanation_prompt(extracted, lang)):
         yield piece
 
@@ -475,7 +483,9 @@ async def generate_checklist(extracted: ExtractedLetter, lang: str) -> list[str]
 # ---------- backwards-compat alias for the original entrypoint ----------
 
 
-async def extract_from_image(image_bytes: bytes, mime: str = "image/jpeg") -> ExtractedLetter:
+async def extract_from_image(
+    image_bytes: bytes, mime: str = "image/jpeg"
+) -> ExtractedLetter:
     """Legacy entrypoint: write bytes to a temp file then call the new API."""
     import tempfile
     import os

@@ -14,7 +14,7 @@ Grouped sections:
 """
 
 from datetime import date, datetime
-from typing import Any, Literal, Optional
+from typing import Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
@@ -185,7 +185,9 @@ class PublicAction(BaseModel):
         description="Full RiskScore breakdown — powers the 'why this risk' view.",
     )
     deadline_confidence: Optional[float] = Field(
-        default=None, ge=0.0, le=1.0,
+        default=None,
+        ge=0.0,
+        le=1.0,
         description="0..1 confidence in the deadline value (null when unknown).",
     )
     deadline_source: Optional[DeadlineSource] = Field(
@@ -200,7 +202,8 @@ class PublicAction(BaseModel):
     )
     reply_needed: bool = False
     amount_due_eur: Optional[float] = Field(
-        default=None, ge=0.0,
+        default=None,
+        ge=0.0,
         description=(
             "Outstanding amount the user must pay for this action, in EUR. "
             "Extracted from the OCR text by a regex pattern matcher."
@@ -227,7 +230,9 @@ class PublicLetter(BaseModel):
         description="Verbatim German OCR text from the source. Never localized.",
     )
     confidence: Optional[float] = Field(
-        default=None, ge=0.0, le=1.0,
+        default=None,
+        ge=0.0,
+        le=1.0,
         description="0..1 overall extraction confidence. <0.85 triggers a 'get a human' UI prompt.",
     )
     actions: list[PublicAction] = Field(default_factory=list)
@@ -283,7 +288,8 @@ class PublicActionListItem(BaseModel):
     status: ActionStatus
     reply_needed: bool
     amount_due_eur: Optional[float] = Field(
-        default=None, ge=0.0,
+        default=None,
+        ge=0.0,
         description=(
             "Outstanding EUR amount for this action, mirrored from the same "
             "field on PublicAction. Included on the list shape so the "
@@ -414,7 +420,9 @@ class ErrorResponse(BaseModel):
         description="Stable machine-readable identifier — see docs/06-api-contract.md."
     )
     message: str = Field(description="Localized, user-facing copy.")
-    detail: str = Field(description="Alias of `message` — for clients that expect FastAPI's default error shape.")
+    detail: str = Field(
+        description="Alias of `message` — for clients that expect FastAPI's default error shape."
+    )
     details: Optional[ErrorDetails] = None
 
 
