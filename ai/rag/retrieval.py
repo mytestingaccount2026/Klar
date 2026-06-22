@@ -17,11 +17,8 @@ Usage:
 
 import os
 import sys
-import json
-import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Optional
 
 import chromadb
 from openai import OpenAI
@@ -161,5 +158,5 @@ def retrieve_as_context(
 
     try:
         return "\n\n---\n\n".join(parts)
-    except:
+    except Exception:
         return "Error formatting legal context."
