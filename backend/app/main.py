@@ -85,6 +85,7 @@ def _bridge_env_to_ai_team() -> None:
     value still wins.
     """
     import os
+
     if settings.effective_llm_api_key:
         os.environ.setdefault("DASHSCOPE_API_KEY", settings.effective_llm_api_key)
     if settings.effective_llm_base_url:

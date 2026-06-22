@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 @dataclass
 class RAGEvent:
-    type: str   # "explanation" | "response_draft" | "checklist" | "citations" | "error"
+    type: str  # "explanation" | "response_draft" | "checklist" | "citations" | "error"
     data: dict
     confidence: str = "high"  # "high" if RAG matched well, "low" if no strong matches
     # data shapes per type:

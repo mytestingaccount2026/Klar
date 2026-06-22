@@ -46,7 +46,11 @@ class Settings(BaseSettings):
 
     @property
     def effective_llm_base_url(self) -> str:
-        return self.qwen_api_base or self.llm_base_url or "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+        return (
+            self.qwen_api_base
+            or self.llm_base_url
+            or "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+        )
 
     @property
     def effective_llm_model(self) -> str:

@@ -22,7 +22,6 @@ shapes / SSE streaming.
 """
 
 import logging
-from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Query, UploadFile
@@ -30,8 +29,6 @@ from fastapi.responses import StreamingResponse
 from sqlmodel import Session, select
 
 from app.auth.dependencies import get_current_user
-
-logger = logging.getLogger("klar.public")
 from app.database import get_session
 from app.errors import ErrorCode, KlarHTTPException
 from app.models import (
@@ -54,7 +51,6 @@ from app.schemas import (
     PublicLetter,
     ChatRequest,
     ChatResponse,
-    RagHit,
     RagQuery,
     RagResponse,
     ReplyDraft,
@@ -64,11 +60,12 @@ from app.schemas import (
 from app.services import ai_bridge
 from app.services.extraction import (
     extract_from_letter_file,
-    generate_reply_text,
     normalize_lang,
 )
 from app.services.persistence import persist_extraction
 from app.services.storage import detect_magic_mime, save_letter_file
+
+logger = logging.getLogger("klar.public")
 
 router = APIRouter(tags=["public"])
 
@@ -85,9 +82,7 @@ MAX_FILE_BYTES = 10 * 1024 * 1024  # 10 MB per spec
 # ---------- shape projection: Letter + ActionItems → PublicLetter ----------
 
 
-def _public_action(
-    action: ActionItem, latest_risk: RiskScore | None
-) -> PublicAction:
+def _public_action(action: ActionItem, latest_risk: RiskScore | None) -> PublicAction:
     risk_breakdown = None
     if latest_risk is not None:
         risk_breakdown = RiskBreakdown(
@@ -118,9 +113,7 @@ def _public_action(
     )
 
 
-def _load_risk_by_action(
-    db: Session, action_ids: list[UUID]
-) -> dict[UUID, RiskScore]:
+def _load_risk_by_action(db: Session, action_ids: list[UUID]) -> dict[UUID, RiskScore]:
     """Batch-load the most recent RiskScore per action — O(1) queries."""
     if not action_ids:
         return {}
@@ -138,9 +131,7 @@ def _load_risk_by_action(
 
 def _public_letter(db: Session, letter: Letter) -> PublicLetter:
     actions = list(
-        db.scalars(
-            select(ActionItem).where(ActionItem.letter_id == letter.id)
-        ).all()
+        db.scalars(select(ActionItem).where(ActionItem.letter_id == letter.id)).all()
     )
     risk_by_action = _load_risk_by_action(db, [a.id for a in actions])
     # Citations are stored as a list[dict] on the Letter row, but the public
@@ -167,10 +158,7 @@ def _public_letter(db: Session, letter: Letter) -> PublicLetter:
         summary_en=letter.summary,  # field renamed for frontend contract
         ocr_text=letter.ocr_text or None,
         confidence=letter.confidence,
-        actions=[
-            _public_action(a, risk_by_action.get(a.id))
-            for a in actions
-        ],
+        actions=[_public_action(a, risk_by_action.get(a.id)) for a in actions],
         extraction_warnings=letter.extraction_warnings or [],
         explanation=letter.explanation or "",
         consequence=letter.consequence or "",
@@ -263,7 +251,8 @@ async def post_letter(
         # implementation details to the client.
         logger.exception(
             "Qwen extraction failed for letter %s: %s",
-            letter.id, exc,
+            letter.id,
+            exc,
         )
         letter.status = LetterStatus.ERROR
         db.add(letter)
@@ -342,8 +331,15 @@ def list_actions_public(
                 422,
                 ErrorCode.VALIDATION_ERROR,
                 message=f"Unknown status: {status!r}.",
-                details={"errors": [{"field": "status", "message": "must be one of "
-                                     + ", ".join(s.value for s in ActionStatus)}]},
+                details={
+                    "errors": [
+                        {
+                            "field": "status",
+                            "message": "must be one of "
+                            + ", ".join(s.value for s in ActionStatus),
+                        }
+                    ]
+                },
             )
 
     stmt = (
@@ -436,7 +432,10 @@ def update_action_public(
     ),
     responses={
         401: {"model": ErrorResponse, "description": "Not authenticated."},
-        404: {"model": ErrorResponse, "description": "`LETTER_NOT_FOUND` or `ACTION_NOT_FOUND`."},
+        404: {
+            "model": ErrorResponse,
+            "description": "`LETTER_NOT_FOUND` or `ACTION_NOT_FOUND`.",
+        },
         502: {"model": ErrorResponse, "description": "`LLM_PROVIDER_ERROR`."},
     },
 )
@@ -453,8 +452,7 @@ async def generate_reply(
 
     payload = payload or ReplyRequest()
 
-    # If action_id is set, scope to that one action; otherwise include all
-    # actions on the letter that need a reply.
+    # If action_id is set, validate that it belongs to this letter.
     if payload.action_id:
         try:
             action_uuid = UUID(payload.action_id)
@@ -463,16 +461,6 @@ async def generate_reply(
         action = db.get(ActionItem, action_uuid)
         if action is None or action.letter_id != letter.id:
             raise KlarHTTPException(404, ErrorCode.ACTION_NOT_FOUND)
-        action_titles = [action.title]
-    else:
-        actions = list(
-            db.scalars(
-                select(ActionItem).where(ActionItem.letter_id == letter.id)
-            ).all()
-        )
-        # Prefer actions explicitly flagged reply_needed; fall back to all titles.
-        reply_actions = [a for a in actions if a.reply_needed] or actions
-        action_titles = [a.title for a in reply_actions]
 
     # 1) Retrieve real legal context from the AI team's law corpus
     try:
@@ -512,12 +500,15 @@ async def generate_reply(
     except Exception as exc:
         logger.exception(
             "Reply generation failed for letter %s: %s",
-            letter_id, exc,
+            letter_id,
+            exc,
         )
         raise KlarHTTPException(502, ErrorCode.LLM_PROVIDER_ERROR)
 
     # 4) Unpack + persist all 4 long-form fields
-    explanation, body_text, checklist, citations = ai_bridge.unpack_generation_output(generation)
+    explanation, body_text, checklist, citations = ai_bridge.unpack_generation_output(
+        generation
+    )
     letter.explanation = explanation
     letter.response_draft = body_text
     letter.checklist = checklist
@@ -584,7 +575,6 @@ async def chat_about_letter(
     db: Session = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
-    import json
     import os
     from uuid import UUID as _UUID
 
@@ -633,19 +623,23 @@ async def chat_about_letter(
         extra_body={"enable_thinking": False},
     )
 
-    response = await model.ainvoke([
-        SystemMessage(content=system),
-        HumanMessage(content=payload.query),
-    ])
+    response = await model.ainvoke(
+        [
+            SystemMessage(content=system),
+            HumanMessage(content=payload.query),
+        ]
+    )
 
     # Coerce raw dicts → CitationItem (same as _public_letter)
     clean_citations = []
     for c in citations:
         if isinstance(c, dict) and c.get("section"):
-            clean_citations.append(CitationItem(
-                section=str(c.get("section", "")),
-                text=str(c.get("text", "")),
-            ))
+            clean_citations.append(
+                CitationItem(
+                    section=str(c.get("section", "")),
+                    text=str(c.get("text", "")),
+                )
+            )
     return ChatResponse(answer=response.content, citations=clean_citations)
 
 
@@ -684,7 +678,7 @@ async def form_fill(
     placeholders = []
 
     # From checklist (documents to prepare)
-    for item in (letter.checklist or []):
+    for item in letter.checklist or []:
         placeholders.append(str(item))
 
     # From actions (steps the user needs to take)
@@ -692,12 +686,25 @@ async def form_fill(
         db.scalars(select(ActionItem).where(ActionItem.letter_id == letter.id)).all()
     )
     for action in actions:
-        for step in (action.steps or []):
-            if any(kw in step.lower() for kw in [
-                "iban", "steuer", "name", "adresse", "address", "nummer",
-                "number", "unterschrift", "signature", "datum", "date",
-                "versichertennummer", "aktenzeichen",
-            ]):
+        for step in action.steps or []:
+            if any(
+                kw in step.lower()
+                for kw in [
+                    "iban",
+                    "steuer",
+                    "name",
+                    "adresse",
+                    "address",
+                    "nummer",
+                    "number",
+                    "unterschrift",
+                    "signature",
+                    "datum",
+                    "date",
+                    "versichertennummer",
+                    "aktenzeichen",
+                ]
+            ):
                 placeholders.append(step)
 
     # Always include standard form fields — these match the PLACEHOLDER_MAP
@@ -725,7 +732,9 @@ async def form_fill(
             placeholders=placeholders[:8],  # Cap at 8 to keep prompt manageable
         )
     except Exception as exc:
-        logger.exception("Form-fill generation failed for letter %s: %s", letter_id, exc)
+        logger.exception(
+            "Form-fill generation failed for letter %s: %s", letter_id, exc
+        )
         raise KlarHTTPException(502, ErrorCode.LLM_PROVIDER_ERROR)
 
     return Response(

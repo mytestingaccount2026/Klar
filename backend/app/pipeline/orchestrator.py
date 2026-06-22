@@ -37,9 +37,8 @@ before this generator body runs.
 import asyncio
 import json
 import logging
-import os
 import re
-from datetime import date, datetime
+from datetime import date
 from typing import AsyncIterator
 from uuid import UUID
 
@@ -99,10 +98,31 @@ def _mark_error(letter_id: UUID, message: str) -> None:
 # text for common German date patterns and pick the most-likely deadline.
 
 _GERMAN_MONTHS = {
-    "januar": 1, "jan": 1, "februar": 2, "feb": 2, "märz": 3, "mar": 3, "mrz": 3,
-    "april": 4, "apr": 4, "mai": 5, "juni": 6, "jun": 6, "juli": 7, "jul": 7,
-    "august": 8, "aug": 8, "september": 9, "sep": 9, "sept": 9,
-    "oktober": 10, "okt": 10, "november": 11, "nov": 11, "dezember": 12, "dez": 12,
+    "januar": 1,
+    "jan": 1,
+    "februar": 2,
+    "feb": 2,
+    "märz": 3,
+    "mar": 3,
+    "mrz": 3,
+    "april": 4,
+    "apr": 4,
+    "mai": 5,
+    "juni": 6,
+    "jun": 6,
+    "juli": 7,
+    "jul": 7,
+    "august": 8,
+    "aug": 8,
+    "september": 9,
+    "sep": 9,
+    "sept": 9,
+    "oktober": 10,
+    "okt": 10,
+    "november": 11,
+    "nov": 11,
+    "dezember": 12,
+    "dez": 12,
 }
 
 # Match: "28. Oktober 2021", "28 Oktober 2021", "den 28. Oktober 2021"
@@ -199,16 +219,20 @@ async def process_letter_stream(letter_id: UUID, lang: str) -> AsyncIterator[str
     except Exception as exc:
         logger.exception(
             "AI team's modules failed to import — check env (DASHSCOPE_API_KEY, "
-            "TAVILY_API_KEY): %s", exc,
+            "TAVILY_API_KEY): %s",
+            exc,
         )
-        yield sse_event("error", sse_error_payload(
-            ErrorCode.LLM_PROVIDER_ERROR,
-            message=(
-                "AI pipeline failed to initialize. Most likely cause: missing "
-                "DASHSCOPE_API_KEY or TAVILY_API_KEY env var on the backend "
-                "process. See server logs."
+        yield sse_event(
+            "error",
+            sse_error_payload(
+                ErrorCode.LLM_PROVIDER_ERROR,
+                message=(
+                    "AI pipeline failed to initialize. Most likely cause: missing "
+                    "DASHSCOPE_API_KEY or TAVILY_API_KEY env var on the backend "
+                    "process. See server logs."
+                ),
             ),
-        ))
+        )
         return
 
     out_lang = normalize_lang(lang)
@@ -244,16 +268,18 @@ async def process_letter_stream(letter_id: UUID, lang: str) -> AsyncIterator[str
             # STAGE 2 — ReAct agent (LangGraph + Tavily, ~5-15s)
             # ============================================================
             agent_events_collected = []
-            classification_data: dict | None = None
             risk_label = "Medium"
 
             async for ev in run_react_agent(ocr_text):
                 agent_events_collected.append(ev)
 
                 if ev.type == "classification":
-                    classification_data = ev.data
-                    category = ai_bridge.map_classification_to_category(ev.data.get("type", ""))
-                    letter.document_type = ev.data.get("type", "") or letter.document_type
+                    category = ai_bridge.map_classification_to_category(
+                        ev.data.get("type", "")
+                    )
+                    letter.document_type = (
+                        ev.data.get("type", "") or letter.document_type
+                    )
                     letter.letter_type = letter.document_type
                     letter.category = category
                     letter.institution = ev.data.get("agency", "") or letter.institution
@@ -292,17 +318,37 @@ async def process_letter_stream(letter_id: UUID, lang: str) -> AsyncIterator[str
                     yield sse_event("consequence", {"text": consequence_text})
 
                 elif ev.type == "error":
-                    logger.warning("ReAct agent emitted error: %s", ev.data.get("message"))
+                    logger.warning(
+                        "ReAct agent emitted error: %s", ev.data.get("message")
+                    )
                     # Don't propagate immediately — try to continue with what we have.
 
                 await asyncio.sleep(0.05)
 
             # Reconstruct AgentAnalysis-like dict from collected events
-            from ai.schemas import AgentAnalysis, Classification, Deadline, Consequence, RiskScore as TheirRiskScore
-            cls_data = next((e.data for e in agent_events_collected if e.type == "classification"), {})
-            dl_data = next((e.data for e in agent_events_collected if e.type == "deadline"), {})
-            rs_data = next((e.data for e in agent_events_collected if e.type == "risk_score"), {"score": 3, "label": "Medium", "reason": ""})
-            cq_data = next((e.data for e in agent_events_collected if e.type == "consequence"), {"text": "", "severity": ""})
+            from ai.schemas import (
+                AgentAnalysis,
+                Classification,
+                Deadline,
+                Consequence,
+                RiskScore as TheirRiskScore,
+            )
+
+            cls_data = next(
+                (e.data for e in agent_events_collected if e.type == "classification"),
+                {},
+            )
+            dl_data = next(
+                (e.data for e in agent_events_collected if e.type == "deadline"), {}
+            )
+            rs_data = next(
+                (e.data for e in agent_events_collected if e.type == "risk_score"),
+                {"score": 3, "label": "Medium", "reason": ""},
+            )
+            cq_data = next(
+                (e.data for e in agent_events_collected if e.type == "consequence"),
+                {"text": "", "severity": ""},
+            )
 
             # Fallback: if the agent didn't extract a deadline, scan the OCR
             # text with our German-date regex. Common for letters where the
@@ -324,19 +370,35 @@ async def process_letter_stream(letter_id: UUID, lang: str) -> AsyncIterator[str
                     # Also emit a deadline SSE event so the frontend sees it live
                     yield sse_event(
                         "deadline",
-                        {"date": agent_date_iso, "days_remaining": days_remaining,
-                         "note": "Found via OCR text scan (agent missed it)"},
+                        {
+                            "date": agent_date_iso,
+                            "days_remaining": days_remaining,
+                            "note": "Found via OCR text scan (agent missed it)",
+                        },
                     )
 
             analysis = AgentAnalysis(
-                classification=Classification(type=cls_data.get("type", "Unknown"), agency=cls_data.get("agency", "Unknown")),
+                classification=Classification(
+                    type=cls_data.get("type", "Unknown"),
+                    agency=cls_data.get("agency", "Unknown"),
+                ),
                 deadline=Deadline(
                     date=dl_data.get("date"),
                     days_remaining=dl_data.get("days_remaining"),
-                    source="letter" if (dl_data.get("date") and not fallback_date) else fallback_source if fallback_date else "none",
+                    source="letter"
+                    if (dl_data.get("date") and not fallback_date)
+                    else fallback_source
+                    if fallback_date
+                    else "none",
                 ),
-                consequence=Consequence(text=cq_data.get("text", ""), severity=cq_data.get("severity", "")),
-                risk_score=TheirRiskScore(score=rs_data.get("score", 3), label=rs_data.get("label", "Medium"), reason=rs_data.get("reason", "")),
+                consequence=Consequence(
+                    text=cq_data.get("text", ""), severity=cq_data.get("severity", "")
+                ),
+                risk_score=TheirRiskScore(
+                    score=rs_data.get("score", 3),
+                    label=rs_data.get("label", "Medium"),
+                    reason=rs_data.get("reason", ""),
+                ),
             )
             unpacked = ai_bridge.unpack_agent_analysis(analysis)
 
@@ -381,7 +443,11 @@ async def process_letter_stream(letter_id: UUID, lang: str) -> AsyncIterator[str
             if not dl_data.get("date"):
                 yield sse_event(
                     "deadline",
-                    {"date": None, "days_remaining": None, "note": "No explicit deadline"},
+                    {
+                        "date": None,
+                        "days_remaining": None,
+                        "note": "No explicit deadline",
+                    },
                 )
 
             # ============================================================
@@ -389,6 +455,7 @@ async def process_letter_stream(letter_id: UUID, lang: str) -> AsyncIterator[str
             # ============================================================
             try:
                 from ai.rag.retrieval import retrieve_legal_context
+
                 # AI team's new signature (commit 61fd2b5): (letter_type, consequence, top_k)
                 legal_chunks = retrieve_legal_context(
                     letter_type=letter.document_type or "",
@@ -396,14 +463,18 @@ async def process_letter_stream(letter_id: UUID, lang: str) -> AsyncIterator[str
                     top_k=5,
                 )
             except Exception as e:
-                logger.warning("Legal retrieval failed: %s — continuing without citations", e)
+                logger.warning(
+                    "Legal retrieval failed: %s — continuing without citations", e
+                )
                 legal_chunks = []
 
             # ============================================================
             # STAGE 4 — Grounded generation (~5-10s)
             # ============================================================
             agent_result = ai_bridge.synthesize_agent_result(letter, action=action)
-            agent_result.risk_label = risk_label  # use their qualitative label for grounding context
+            agent_result.risk_label = (
+                risk_label  # use their qualitative label for grounding context
+            )
 
             generation = await ai_bridge.generate_grounded_response(
                 ocr_text=ocr_text,
@@ -411,7 +482,9 @@ async def process_letter_stream(letter_id: UUID, lang: str) -> AsyncIterator[str
                 language=out_lang,
                 legal_chunks=legal_chunks,
             )
-            explanation, response_draft, checklist, citations = ai_bridge.unpack_generation_output(generation)
+            explanation, response_draft, checklist, citations = (
+                ai_bridge.unpack_generation_output(generation)
+            )
 
             # Stream explanation chunks
             for piece in _chunk_text_for_streaming(explanation, chunk_size=50):
@@ -447,6 +520,7 @@ async def process_letter_stream(letter_id: UUID, lang: str) -> AsyncIterator[str
 
             # Project to the same PublicLetter shape GET /letters/{id} returns.
             from app.routers.public import _public_letter
+
             public = _public_letter(db, letter)
 
             yield sse_event(

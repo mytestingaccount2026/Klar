@@ -41,7 +41,9 @@ async def _detect_fields(image_path: str) -> list[dict]:
 
     b64 = base64.b64encode(image_bytes).decode()
     ext = image_path.rsplit(".", 1)[-1].lower()
-    mime = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png"}.get(ext, "image/jpeg")
+    mime = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png"}.get(
+        ext, "image/jpeg"
+    )
 
     async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.post(
@@ -52,13 +54,18 @@ async def _detect_fields(image_path: str) -> list[dict]:
             },
             json={
                 "model": "qwen-vl-max",
-                "messages": [{
-                    "role": "user",
-                    "content": [
-                        {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}},
-                        {"type": "text", "text": DETECT_PROMPT},
-                    ],
-                }],
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": f"data:{mime};base64,{b64}"},
+                            },
+                            {"type": "text", "text": DETECT_PROMPT},
+                        ],
+                    }
+                ],
                 "temperature": 0,
                 "max_tokens": 2048,
             },
@@ -82,7 +89,7 @@ async def _detect_fields(image_path: str) -> list[dict]:
     if start == -1 or end == -1:
         return []
 
-    json_str = text[start:end + 1]
+    json_str = text[start : end + 1]
     json_str = json_str.replace("'", '"')
     json_str = re.sub(r",\s*([}\]])", r"\1", json_str)
 
@@ -109,7 +116,9 @@ def _draw_placeholders(image_path: str, fields: list[dict]) -> bytes:
         font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", font_size)
     except (OSError, IOError):
         try:
-            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size)
+            font = ImageFont.truetype(
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size
+            )
         except (OSError, IOError):
             font = ImageFont.load_default()
 
@@ -118,7 +127,11 @@ def _draw_placeholders(image_path: str, fields: list[dict]) -> bytes:
     # Compute scale from model's coordinate space to actual pixels.
     # Qwen-VL returns coords in its internal resolution, not 0-1000.
     # Derive scale from the max coordinate values in the response.
-    all_bboxes = [f["bbox_2d"] for f in fields if isinstance(f.get("bbox_2d"), list) and len(f["bbox_2d"]) == 4]
+    all_bboxes = [
+        f["bbox_2d"]
+        for f in fields
+        if isinstance(f.get("bbox_2d"), list) and len(f["bbox_2d"]) == 4
+    ]
     if not all_bboxes:
         buf = BytesIO()
         img.save(buf, format="PNG", quality=95)

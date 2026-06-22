@@ -1,7 +1,5 @@
 """Authentication routes: signup, login, logout, me, forgot/reset password."""
 
-from datetime import datetime
-
 from fastapi import APIRouter, Depends, Request, Response, status
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlmodel import Session as DBSession, select

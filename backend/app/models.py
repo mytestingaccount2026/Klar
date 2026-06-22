@@ -55,20 +55,22 @@ class DocumentCategory(str, Enum):
     does not fit any defined bucket.
     """
 
-    HEALTH_INSURANCE = "health_insurance"      # AOK, TK, BARMER, private KV
-    OTHER_INSURANCE = "other_insurance"        # Haftpflicht, Hausrat, KFZ, Leben
-    BANKING = "banking"                        # bank accounts, credit cards, SCHUFA
-    TAX = "tax"                                # Finanzamt
-    IMMIGRATION = "immigration"                # Ausländerbehörde, residence/visa
-    EDUCATION = "education"                    # universities, BAföG, Studentenwerk
-    HOUSING = "housing"                        # landlord, property management
-    UTILITIES = "utilities"                    # Strom, Gas, Wasser, Internet, Mobilfunk
-    EMPLOYMENT = "employment"                  # Arbeitgeber, HR, Lohn
-    GOVERNMENT_BENEFITS = "government_benefits"  # ALG I/II, Kindergeld, Elterngeld, Wohngeld
-    PENSION = "pension"                        # Deutsche Rentenversicherung
-    BROADCAST_FEE = "broadcast_fee"            # Beitragsservice / Rundfunk
-    CIVIC = "civic"                            # Bürgeramt, Personalausweis, Pass
-    LEGAL_DEBT = "legal_debt"                  # Mahnbescheid, Inkasso, Bußgeld, Anwalt
+    HEALTH_INSURANCE = "health_insurance"  # AOK, TK, BARMER, private KV
+    OTHER_INSURANCE = "other_insurance"  # Haftpflicht, Hausrat, KFZ, Leben
+    BANKING = "banking"  # bank accounts, credit cards, SCHUFA
+    TAX = "tax"  # Finanzamt
+    IMMIGRATION = "immigration"  # Ausländerbehörde, residence/visa
+    EDUCATION = "education"  # universities, BAföG, Studentenwerk
+    HOUSING = "housing"  # landlord, property management
+    UTILITIES = "utilities"  # Strom, Gas, Wasser, Internet, Mobilfunk
+    EMPLOYMENT = "employment"  # Arbeitgeber, HR, Lohn
+    GOVERNMENT_BENEFITS = (
+        "government_benefits"  # ALG I/II, Kindergeld, Elterngeld, Wohngeld
+    )
+    PENSION = "pension"  # Deutsche Rentenversicherung
+    BROADCAST_FEE = "broadcast_fee"  # Beitragsservice / Rundfunk
+    CIVIC = "civic"  # Bürgeramt, Personalausweis, Pass
+    LEGAL_DEBT = "legal_debt"  # Mahnbescheid, Inkasso, Bußgeld, Anwalt
     OTHER = "other"
 
 
@@ -114,15 +116,15 @@ class Letter(SQLModel, table=True):
     original_file: str = ""
 
     # Spec-flat structured fields (denormalized from ActionItem for /api/letters)
-    letter_type: str = ""          # alias of document_type for spec compat
-    risk_score: int = 0            # denormalized highest action risk
+    letter_type: str = ""  # alias of document_type for spec compat
+    risk_score: int = 0  # denormalized highest action risk
     deadline_date: Optional[date] = None  # denormalized most-urgent action deadline
 
     # Rich Klar extras
     institution: str = ""
     document_type: str = ""
     category: DocumentCategory = DocumentCategory.OTHER
-    summary: str = ""              # language matches Letter.language
+    summary: str = ""  # language matches Letter.language
     language: str = "en"
 
     # OCR + long-form generation outputs
@@ -132,7 +134,7 @@ class Letter(SQLModel, table=True):
     # "low confidence, get a human" prompt. Computed from extraction outputs.
     confidence: Optional[float] = None
     explanation: str = ""
-    response_draft: str = ""       # ALWAYS German (formal reply to German institution)
+    response_draft: str = ""  # ALWAYS German (formal reply to German institution)
     checklist: list[str] = Field(default_factory=list, sa_column=Column(JSON))
     citations: list[dict] = Field(default_factory=list, sa_column=Column(JSON))
     consequence: str = ""

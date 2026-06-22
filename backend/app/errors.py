@@ -56,35 +56,43 @@ class ErrorCode(str, Enum):
     """
 
     # --- generic ---
-    HTTP_ERROR = "HTTP_ERROR"                     # untyped fallback (legacy HTTPException)
-    INTERNAL_ERROR = "INTERNAL_ERROR"             # unhandled exception
-    VALIDATION_ERROR = "VALIDATION_ERROR"         # request body / query / path
+    HTTP_ERROR = "HTTP_ERROR"  # untyped fallback (legacy HTTPException)
+    INTERNAL_ERROR = "INTERNAL_ERROR"  # unhandled exception
+    VALIDATION_ERROR = "VALIDATION_ERROR"  # request body / query / path
 
     # --- auth ---
-    AUTH_NOT_AUTHENTICATED = "AUTH_NOT_AUTHENTICATED"      # no cookie at all
-    AUTH_SESSION_NOT_FOUND = "AUTH_SESSION_NOT_FOUND"      # cookie present, but no Session row in DB
-    AUTH_SESSION_EXPIRED = "AUTH_SESSION_EXPIRED"          # Session row exists but past expires_at
+    AUTH_NOT_AUTHENTICATED = "AUTH_NOT_AUTHENTICATED"  # no cookie at all
+    AUTH_SESSION_NOT_FOUND = (
+        "AUTH_SESSION_NOT_FOUND"  # cookie present, but no Session row in DB
+    )
+    AUTH_SESSION_EXPIRED = (
+        "AUTH_SESSION_EXPIRED"  # Session row exists but past expires_at
+    )
     AUTH_INVALID_CREDENTIALS = "AUTH_INVALID_CREDENTIALS"  # wrong email / password
-    AUTH_EMAIL_TAKEN = "AUTH_EMAIL_TAKEN"                  # signup with existing email
-    AUTH_INVALID_RESET_TOKEN = "AUTH_INVALID_RESET_TOKEN"  # token unknown / already used
+    AUTH_EMAIL_TAKEN = "AUTH_EMAIL_TAKEN"  # signup with existing email
+    AUTH_INVALID_RESET_TOKEN = (
+        "AUTH_INVALID_RESET_TOKEN"  # token unknown / already used
+    )
     AUTH_RESET_TOKEN_EXPIRED = "AUTH_RESET_TOKEN_EXPIRED"  # token past 15-min TTL
 
     # --- letters ---
     LETTER_NOT_FOUND = "LETTER_NOT_FOUND"
-    LETTER_FILE_MISSING = "LETTER_FILE_MISSING"            # row exists but file gone
+    LETTER_FILE_MISSING = "LETTER_FILE_MISSING"  # row exists but file gone
     LETTER_EMPTY_UPLOAD = "LETTER_EMPTY_UPLOAD"
     LETTER_TOO_LARGE = "LETTER_TOO_LARGE"
     LETTER_UNSUPPORTED_TYPE = "LETTER_UNSUPPORTED_TYPE"
-    LETTER_CORRUPT_FILE = "LETTER_CORRUPT_FILE"            # magic-bytes mismatch
-    LETTER_MIME_MISMATCH = "LETTER_MIME_MISMATCH"          # declared ≠ detected
+    LETTER_CORRUPT_FILE = "LETTER_CORRUPT_FILE"  # magic-bytes mismatch
+    LETTER_MIME_MISMATCH = "LETTER_MIME_MISMATCH"  # declared ≠ detected
 
     # --- actions ---
     ACTION_NOT_FOUND = "ACTION_NOT_FOUND"
 
     # --- pipeline / AI ---
-    EXTRACTION_FAILED = "EXTRACTION_FAILED"                # SSE-only: model returned no tool call, parse error, etc.
-    LLM_PROVIDER_ERROR = "LLM_PROVIDER_ERROR"              # network / 5xx from Qwen
-    PDF_RENDER_FAILED = "PDF_RENDER_FAILED"                # pdf2image / poppler missing
+    EXTRACTION_FAILED = (
+        "EXTRACTION_FAILED"  # SSE-only: model returned no tool call, parse error, etc.
+    )
+    LLM_PROVIDER_ERROR = "LLM_PROVIDER_ERROR"  # network / 5xx from Qwen
+    PDF_RENDER_FAILED = "PDF_RENDER_FAILED"  # pdf2image / poppler missing
 
 
 # User-facing default messages per code. Keep short, no jargon, no secrets.
@@ -93,7 +101,6 @@ _DEFAULT_MESSAGES: dict[ErrorCode, str] = {
     ErrorCode.HTTP_ERROR: "Something went wrong with that request.",
     ErrorCode.INTERNAL_ERROR: "Something went wrong on our end. Please try again.",
     ErrorCode.VALIDATION_ERROR: "Some fields in your request are invalid.",
-
     ErrorCode.AUTH_NOT_AUTHENTICATED: "Please sign in to continue.",
     ErrorCode.AUTH_SESSION_NOT_FOUND: "Your session is no longer recognized. Please sign in again.",
     ErrorCode.AUTH_SESSION_EXPIRED: "Your session has expired. Please sign in again.",
@@ -101,7 +108,6 @@ _DEFAULT_MESSAGES: dict[ErrorCode, str] = {
     ErrorCode.AUTH_EMAIL_TAKEN: "An account with that email already exists.",
     ErrorCode.AUTH_INVALID_RESET_TOKEN: "This reset link is invalid or has already been used.",
     ErrorCode.AUTH_RESET_TOKEN_EXPIRED: "This reset link has expired. Please request a new one.",
-
     ErrorCode.LETTER_NOT_FOUND: "That letter doesn't exist or you don't have access to it.",
     ErrorCode.LETTER_FILE_MISSING: "We can't find the uploaded file for this letter.",
     ErrorCode.LETTER_EMPTY_UPLOAD: "The uploaded file is empty.",
@@ -109,9 +115,7 @@ _DEFAULT_MESSAGES: dict[ErrorCode, str] = {
     ErrorCode.LETTER_UNSUPPORTED_TYPE: "We can only read JPEG, PNG, HEIC, WebP, or PDF letters.",
     ErrorCode.LETTER_CORRUPT_FILE: "The file looks corrupted or isn't the type it claims to be.",
     ErrorCode.LETTER_MIME_MISMATCH: "The file's content doesn't match its declared type.",
-
     ErrorCode.ACTION_NOT_FOUND: "That action doesn't exist or you don't have access to it.",
-
     ErrorCode.EXTRACTION_FAILED: "We couldn't read this letter. Try a clearer photo or PDF.",
     ErrorCode.LLM_PROVIDER_ERROR: "Our AI provider is having trouble. Please try again in a moment.",
     ErrorCode.PDF_RENDER_FAILED: "We couldn't open that PDF. Try uploading it as an image instead.",
@@ -188,8 +192,9 @@ async def generic_http_exception_handler(
     # If detail is already a Klar envelope dict (from KlarHTTPException
     # routing through the default handler), pass it through.
     if isinstance(exc.detail, dict) and "code" in exc.detail:
-        return JSONResponse(status_code=exc.status_code, content=exc.detail,
-                            headers=exc.headers)
+        return JSONResponse(
+            status_code=exc.status_code, content=exc.detail, headers=exc.headers
+        )
 
     # Auth-shaped status codes get more specific codes by default.
     code = ErrorCode.HTTP_ERROR
@@ -239,7 +244,9 @@ async def unhandled_exception_handler(req: Request, exc: Exception) -> JSONRespo
     """
     logger.exception(
         "Unhandled exception on %s %s: %s",
-        req.method, req.url.path, exc,
+        req.method,
+        req.url.path,
+        exc,
     )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

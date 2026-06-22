@@ -26,30 +26,31 @@ from openai import OpenAI
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 
-ROOT = Path(__file__).resolve().parent.parent       # ai/
-LAWS_DIR = ROOT / "data" / "laws"                   # ai/data/laws/
-CHROMA_DIR = ROOT / "data" / "chroma"               # ai/data/chroma/
+ROOT = Path(__file__).resolve().parent.parent  # ai/
+LAWS_DIR = ROOT / "data" / "laws"  # ai/data/laws/
+CHROMA_DIR = ROOT / "data" / "chroma"  # ai/data/chroma/
 COLLECTION_NAME = "german_laws"
 
 # ── Law file → abbreviation map ───────────────────────────────────────────────
 
 LAWS = {
-    "aufenthg.md":  "AufenthG",
-    "aufenthv.md":  "AufenthV",
-    "beschv.md":    "BeschV",
-    "vwvfg.md":     "VwVfG",
-    "bafoeg.md":    "BAföG",
-    "asylg.md":     "AsylG",
-    "asylblg.md":   "AsylbLG",
-    "wogg.md":      "WoGG",
-    "bmg.md":       "BMG",
-    "intv.md":      "IntV",
-    "owig.md":      "OWiG",
-    "estg.md":      "EStG",
-    "sgb5.md":      "SGB V",
+    "aufenthg.md": "AufenthG",
+    "aufenthv.md": "AufenthV",
+    "beschv.md": "BeschV",
+    "vwvfg.md": "VwVfG",
+    "bafoeg.md": "BAföG",
+    "asylg.md": "AsylG",
+    "asylblg.md": "AsylbLG",
+    "wogg.md": "WoGG",
+    "bmg.md": "BMG",
+    "intv.md": "IntV",
+    "owig.md": "OWiG",
+    "estg.md": "EStG",
+    "sgb5.md": "SGB V",
 }
 
 # ── Qwen client ───────────────────────────────────────────────────────────────
+
 
 def get_qwen_client() -> OpenAI:
     api_key = os.getenv("DASHSCOPE_API_KEY")
@@ -64,8 +65,8 @@ def get_qwen_client() -> OpenAI:
 
 
 # Qwen text-embedding-v3 limits
-MAX_BATCH_SIZE = 10       # max texts per API call
-MAX_CHARS = 6000          # conservative char limit (~8192 tokens safety margin)
+MAX_BATCH_SIZE = 10  # max texts per API call
+MAX_CHARS = 6000  # conservative char limit (~8192 tokens safety margin)
 
 
 def truncate(text: str) -> str:
@@ -85,7 +86,7 @@ def embed_texts(client: OpenAI, texts: list[str]) -> list[list[float]]:
     texts = [truncate(t) for t in texts]
 
     for i in range(0, len(texts), MAX_BATCH_SIZE):
-        batch = texts[i:i + MAX_BATCH_SIZE]
+        batch = texts[i : i + MAX_BATCH_SIZE]
         response = client.embeddings.create(
             model="text-embedding-v3",
             input=batch,
@@ -101,6 +102,7 @@ def embed_texts(client: OpenAI, texts: list[str]) -> list[list[float]]:
 
 # ── Chunking ──────────────────────────────────────────────────────────────────
 
+
 def parse_paragraphs(text: str, law_abbrev: str) -> list[dict]:
     """
     Split a law's markdown into one chunk per § paragraph.
@@ -110,7 +112,7 @@ def parse_paragraphs(text: str, law_abbrev: str) -> list[dict]:
         id, text, paragraph, title, law
     """
     # Match § headers at any heading level: ### § 1, #### § 4a, etc.
-    pattern = r'^#{1,4} (§ \d+[a-z]?\b.*?)$'
+    pattern = r"^#{1,4} (§ \d+[a-z]?\b.*?)$"
     matches = list(re.finditer(pattern, text, re.MULTILINE))
 
     chunks = []
@@ -121,7 +123,7 @@ def parse_paragraphs(text: str, law_abbrev: str) -> list[dict]:
         end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
 
         header = match.group(1).strip()
-        para_num_match = re.match(r'(§ \d+[a-z]?)', header)
+        para_num_match = re.match(r"(§ \d+[a-z]?)", header)
         para_num = para_num_match.group(1) if para_num_match else header
 
         body = text[start:end].strip()
@@ -141,18 +143,21 @@ def parse_paragraphs(text: str, law_abbrev: str) -> list[dict]:
             counter += 1
         seen_ids.add(unique_id)
 
-        chunks.append({
-            "id":        unique_id,
-            "text":      body,
-            "paragraph": para_num,
-            "title":     header,
-            "law":       law_abbrev,
-        })
+        chunks.append(
+            {
+                "id": unique_id,
+                "text": body,
+                "paragraph": para_num,
+                "title": header,
+                "law": law_abbrev,
+            }
+        )
 
     return chunks
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
+
 
 def ingest_all():
     print("── Klar RAG Ingestion ──────────────────────────────────────")
@@ -197,32 +202,39 @@ def ingest_all():
             print(f"  ⚠  No paragraphs parsed in {filename}")
             continue
 
-        print(f"  Embedding {law_abbrev}: {len(chunks)} paragraphs ...", end=" ", flush=True)
+        print(
+            f"  Embedding {law_abbrev}: {len(chunks)} paragraphs ...",
+            end=" ",
+            flush=True,
+        )
 
         texts_to_embed = [c["text"] for c in chunks]
         embeddings = embed_texts(client, texts_to_embed)
 
         batch_size = 100
         for i in range(0, len(chunks), batch_size):
-            batch_chunks = chunks[i:i + batch_size]
-            batch_embeddings = embeddings[i:i + batch_size]
+            batch_chunks = chunks[i : i + batch_size]
+            batch_embeddings = embeddings[i : i + batch_size]
 
             collection.add(
                 ids=[c["id"] for c in batch_chunks],
                 documents=[c["text"] for c in batch_chunks],
-                metadatas=[{
-                    "law":       c["law"],
-                    "paragraph": c["paragraph"],
-                    "title":     c["title"],
-                } for c in batch_chunks],
+                metadatas=[
+                    {
+                        "law": c["law"],
+                        "paragraph": c["paragraph"],
+                        "title": c["title"],
+                    }
+                    for c in batch_chunks
+                ],
                 embeddings=batch_embeddings,
             )
 
-        print(f"✅")
+        print("✅")
         total_chunks += len(chunks)
 
     print()
-    print(f"── Done ────────────────────────────────────────────────────")
+    print("── Done ────────────────────────────────────────────────────")
     print(f"   Total chunks ingested : {total_chunks}")
     print(f"   ChromaDB saved to     : {CHROMA_DIR.resolve()}")
     print()

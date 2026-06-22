@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from app.auth.dependencies import get_current_user
 from app.models import User
 from app.rag import store
-from app.schemas import ErrorResponse, RagHit, RagQuery, RagResponse
+from app.schemas import ErrorResponse, RagQuery, RagResponse
 from app.services import ai_bridge
 
 router = APIRouter(prefix="/api/rag", tags=["rag"])

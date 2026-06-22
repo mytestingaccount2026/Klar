@@ -12,7 +12,9 @@ from app.config import settings
 
 def hash_password(plain: str) -> str:
     """bcrypt with cost factor 12 — ~250ms on a modern laptop."""
-    return bcrypt.hashpw(plain.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")
+    return bcrypt.hashpw(plain.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode(
+        "utf-8"
+    )
 
 
 def verify_password(plain: str, password_hash: str) -> bool:

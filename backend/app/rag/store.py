@@ -36,6 +36,7 @@ def init_chroma() -> None:
     coll = get_collection()
     if coll.count() == 0:
         from app.rag.seed import seed_corpus
+
         seed_corpus(coll)
 
 

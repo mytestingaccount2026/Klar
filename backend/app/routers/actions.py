@@ -52,8 +52,15 @@ def list_actions(
                 422,
                 ErrorCode.VALIDATION_ERROR,
                 message=f"Unknown status: {status!r}.",
-                details={"errors": [{"field": "status", "message": "must be one of "
-                                     + ", ".join(s.value for s in ActionStatus)}]},
+                details={
+                    "errors": [
+                        {
+                            "field": "status",
+                            "message": "must be one of "
+                            + ", ".join(s.value for s in ActionStatus),
+                        }
+                    ]
+                },
             )
 
     stmt = (

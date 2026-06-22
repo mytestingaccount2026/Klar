@@ -9,7 +9,9 @@ from io import BytesIO
 from typing import Iterable
 
 
-def pdf_to_image_bytes(path: str, *, dpi: int = 200, max_pages: int = 12) -> list[bytes]:
+def pdf_to_image_bytes(
+    path: str, *, dpi: int = 200, max_pages: int = 12
+) -> list[bytes]:
     """Render up to `max_pages` pages of `path` to PNG bytes.
 
     Imported lazily so callers that never touch a PDF don't pay the

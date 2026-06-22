@@ -1,7 +1,6 @@
 """FastAPI dependency that resolves the current user from the session cookie."""
 
 import logging
-from datetime import datetime
 
 from fastapi import Depends, Request, status
 from sqlmodel import Session as DBSession, select
@@ -37,7 +36,8 @@ def _resolve_user(token: str | None, db: DBSession) -> User:
         logger.warning(
             "AUTH_SESSION_NOT_FOUND: no Session row for token=%s... "
             "(DB=%s; possible causes: db wiped, multiple workers, env mismatch)",
-            token_prefix, settings.database_url,
+            token_prefix,
+            settings.database_url,
         )
         raise KlarHTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -47,7 +47,9 @@ def _resolve_user(token: str | None, db: DBSession) -> User:
     if session_row.expires_at < utcnow():
         logger.info(
             "AUTH_SESSION_EXPIRED: token=%s... expired_at=%s now=%s",
-            token_prefix, session_row.expires_at, utcnow(),
+            token_prefix,
+            session_row.expires_at,
+            utcnow(),
         )
         raise KlarHTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -59,7 +61,8 @@ def _resolve_user(token: str | None, db: DBSession) -> User:
         # Session row exists but the user it points to is gone — corrupt FK.
         logger.error(
             "AUTH: orphan Session row token=%s... user_id=%s has no User",
-            token_prefix, session_row.user_id,
+            token_prefix,
+            session_row.user_id,
         )
         raise KlarHTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
